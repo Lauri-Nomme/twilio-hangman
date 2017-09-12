@@ -158,7 +158,7 @@ public class HangmanVerticleTest {
                 ar -> {
                     ctx.assertTrue(ar.succeeded());
                     HttpResponse<Buffer> response = ar.result();
-                    ctx.assertEquals(response.statusCode(), 400);
+                    ctx.assertEquals(response.statusCode(), 404);
                     async.complete();
                 });
     }

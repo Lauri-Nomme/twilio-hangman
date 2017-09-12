@@ -3,7 +3,7 @@ package io.github.unapplicable.hangman.service;
 public class Game {
     private static final Integer INCORRECT_GUESS_LIMIT = 6;
 
-    public enum Status {ongoing, won, lost};
+    public enum Status {ongoing, won, lost}
 
     private final Player player;
     private final Integer guesses;

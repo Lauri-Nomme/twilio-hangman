@@ -1,6 +1,7 @@
 package io.github.unapplicable.hangman.api;
 
 import io.github.unapplicable.hangman.service.*;
+import io.github.unapplicable.hangman.service.error.BaseError;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RequestParameter;
@@ -15,8 +16,6 @@ import rx.Single;
 import rx.observables.SyncOnSubscribe;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.NoSuchElementException;
 
 public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
     private PlayerService playerService;
@@ -36,6 +35,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
                 Router router = Router
                     .router(vertx)
                     .mountSubRouter("/hangman/v1", hangmanApiRouter);
+                router.route("/hangman/v1/*").failureHandler(this::handleFailure);
                 vertx
                     .createHttpServer()
                     .requestHandler(router::accept)
@@ -45,7 +45,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
             }, startFuture::fail);
     }
 
-    private WordList createWordList() throws IOException, URISyntaxException {
+    private WordList createWordList() throws IOException {
         return new WordList(HangmanVerticle.class.getResourceAsStream("/wordlist.txt"));
     }
 
@@ -75,57 +75,22 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         String playerName = jsonBody.getString("name");
 
         Single<Game> gameS = gameService.start(playerName);
-        gameS.subscribe(game -> {
-                ctx.response().end(JsonObject.mapFrom(game).encodePrettily());
-            },
-            error -> {
-                if (error instanceof RuntimeException) {
-                    ctx.response().setStatusCode(400).end();
-                    return;
-                }
-
-                ctx.response().setStatusCode(500).end(error.getMessage()); // @todo Error & serialization
-            });
+        HttpServerResponse response = ctx.response();
+        gameS.subscribe(game -> respondJsonObject(response, game), ctx::fail);
     }
 
     private void listPlayers(RoutingContext ctx) {
         Observable<Player> playersO = playerService.list();
-        HttpServerResponse response = ctx.response();
 
-        streamJsonObjectArray(playersO, response);
-    }
-
-    private <O> void streamJsonObjectArray(Observable<O> objectsO, HttpServerResponse response) {
-        response.setChunked(true);
-        Observable<String> joinerO = Observable.create(SyncOnSubscribe.createStateful(() -> "[", (s, o) -> {
-            o.onNext(s);
-            return ",";
-        }));
-        joinerO
-            .zipWith(objectsO, (joiner, object) -> joiner.concat(JsonObject.mapFrom(object).encodePrettily()))
-            .subscribe(
-                response::write,
-                error -> {
-                    response.setStatusCode(500).end(error.getMessage()); // @todo Error & serialization. ctx.fail + failureHandler
-                },
-                () -> response.end("]"));
+        streamJsonObjectArray(playersO, ctx);
     }
 
     private void fetchPlayerInfo(RoutingContext ctx) {
         RequestParameters params = ctx.get("parsedParameters");
         String playerId = params.pathParameter("playerId").getString();
         Single<Player> playerS = playerService.fetch(playerId);
-        playerS.subscribe(player -> {
-                ctx.response().end(JsonObject.mapFrom(player).encodePrettily());
-            },
-            error -> {
-                if (error instanceof NoSuchElementException) {
-                    ctx.response().setStatusCode(404).end();
-                    return;
-                }
-
-                ctx.response().setStatusCode(500).end(error.getMessage()); // @todo Error & serialization. ctx.fail + failureHandler
-            });
+        HttpServerResponse response = ctx.response();
+        playerS.subscribe(player -> respondJsonObject(response, player), ctx::fail);
     }
 
     private void createPlayer(RoutingContext ctx) {
@@ -135,21 +100,40 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         Player requestPlayer = new Player(jsonBody.getString("name"), jsonBody.getInteger("age"));
 
         Single<Player> playerS = playerService.create(requestPlayer);
-        playerS.subscribe(player -> {
-                ctx.response().end(JsonObject.mapFrom(player).encodePrettily());
-            },
-            error -> {
-                if (error instanceof RuntimeException) {
-                    ctx.response().setStatusCode(400).end();
-                    return;
-                }
-
-                ctx.response().setStatusCode(500).end(error.getMessage()); // @todo Error & serialization
-            });
+        HttpServerResponse response = ctx.response();
+        playerS.subscribe(player -> respondJsonObject(response, player), ctx::fail);
     }
 
     private void handleFailure(RoutingContext ctx) {
         Throwable failure = ctx.failure();
-        ctx.response().setStatusCode(400).end(failure.getMessage());
+        HttpServerResponse response = ctx.response();
+        Error error = new Error(failure instanceof BaseError ? ((BaseError) failure).getCode() : 500, failure.getMessage());
+        respondError(response, error);
+    }
+
+    private void respondError(HttpServerResponse response, Error error) {
+        response.setStatusCode(error.getCode());
+        respondJsonObject(response, error);
+    }
+
+    private void respondJsonObject(HttpServerResponse response, Object object) {
+        response.putHeader("Content-Type", "application/json");
+        response.end(JsonObject.mapFrom(object).encodePrettily());
+    }
+
+    private <O> void streamJsonObjectArray(Observable<O> objectsO, RoutingContext ctx) {
+        HttpServerResponse response = ctx.response();
+        response.setChunked(true);
+        response.putHeader("Content-Type", "application/json");
+        Observable<String> joinerO = Observable.create(SyncOnSubscribe.createStateful(() -> "[", (s, o) -> {
+            o.onNext(s);
+            return ",";
+        }));
+        joinerO
+            .zipWith(objectsO, (joiner, object) -> joiner.concat(JsonObject.mapFrom(object).encodePrettily()))
+            .subscribe(
+                response::write,
+                ctx::fail,
+                () -> response.end("]"));
     }
 }

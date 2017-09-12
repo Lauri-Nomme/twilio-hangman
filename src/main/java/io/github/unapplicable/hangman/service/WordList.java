@@ -11,10 +11,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class WordList {
-    private List<String> words;
-    private PrimitiveIterator.OfInt randomIterator;
+    private final List<String> words;
+    private final PrimitiveIterator.OfInt randomIterator;
 
-    public WordList(InputStream stream) throws IOException {
+    public WordList(InputStream stream) {
         Stream<String> stringStream = new BufferedReader(new InputStreamReader(stream)).lines();
         this.words = stringStream
             .map(String::toLowerCase)

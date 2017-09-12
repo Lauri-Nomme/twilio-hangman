@@ -4,7 +4,7 @@ import rx.Single;
 
 public class GameServiceImpl implements GameService {
     private final PlayerRepository playerRepository;
-    private WordList wordList;
+    private final WordList wordList;
 
     public GameServiceImpl(PlayerRepository playerRepository, WordList wordList) {
         this.playerRepository = playerRepository;
