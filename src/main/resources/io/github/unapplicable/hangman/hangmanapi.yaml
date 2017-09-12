@@ -40,13 +40,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Games'
+                $ref: 'hangmanapi.yaml#/components/schemas/Games'
         default:
           description: 'Unexpected error'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: 'hangmanapi.yaml#/components/schemas/Error'
 
     #
     # Creates a game
@@ -65,7 +65,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Player'
+              $ref: 'hangmanapi.yaml#/components/schemas/Player'
 
       tags:
         - game
@@ -76,13 +76,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Game'
+                $ref: 'hangmanapi.yaml#/components/schemas/Game'
         default:
           description: "Unexpected error."
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: 'hangmanapi.yaml#/components/schemas/Error'
 
   #
   # Fetches single game
@@ -113,7 +113,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Game'
+                $ref: 'hangmanapi.yaml#/components/schemas/Game'
         '404':
           description: "Game does not exist."
         default:
@@ -121,7 +121,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: 'hangmanapi.yaml#/components/schemas/Error'
 
     #
     # Makes a guess of the letter
@@ -152,7 +152,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Guess'
+              $ref: 'hangmanapi.yaml#/components/schemas/Guess'
 
       responses:
         '200':
@@ -160,13 +160,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Game'
+                $ref: 'hangmanapi.yaml#/components/schemas/Game'
         '400':
           description: "Guess was not made."
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: 'hangmanapi.yaml#/components/schemas/Error'
 
     #
     # Gives up the game.
@@ -178,6 +178,9 @@ paths:
         This API call allows you to give up on a game. It ends the game and returns the game object with word revealed.
 
         Game is marked as lost.
+
+      operationId: giveUp
+
       tags:
         - game
 
@@ -195,7 +198,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Game'
+                $ref: 'hangmanapi.yaml#/components/schemas/Game'
         '404':
           description: "Game was not found."
         default:
@@ -203,7 +206,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: 'hangmanapi.yaml#/components/schemas/Error'
 
   /player:
     get:
@@ -211,6 +214,8 @@ paths:
 
       description: |
         This API call allows to list all players that have registered.
+
+      operationId: listPlayers
 
       tags:
         - player
@@ -220,13 +225,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Players'
+                $ref: 'hangmanapi.yaml#/components/schemas/Players'
         default:
           description: "Unexpected error"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: 'hangmanapi.yaml#/components/schemas/Error'
 
     post:
       summary: "Create player."
@@ -234,13 +239,15 @@ paths:
       description: |
         This API call allows to create a new player. If the player name is already taken 400 error is thrown.
 
+      operationId: createPlayer
+
       requestBody:
         description: "Player object"
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Player'
+              $ref: 'hangmanapi.yaml#/components/schemas/Player'
 
       tags:
         - player
@@ -251,7 +258,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Player'
+                $ref: 'hangmanapi.yaml#/components/schemas/Player'
         '400':
           description: "Player already exists"
         default:
@@ -259,7 +266,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: 'hangmanapi.yaml#/components/schemas/Error'
 
   /player/{playerId}:
     get:
@@ -267,6 +274,8 @@ paths:
 
       description: |
         This API call allows you to fetch the player information object.
+
+      operationId: fetchPlayerInfo
 
       tags:
         - player
@@ -285,7 +294,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Player'
+                $ref: 'hangmanapi.yaml#/components/schemas/Player'
         '404':
           description: 'Player was not found'
         default:
@@ -293,12 +302,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: 'hangmanapi.yaml#/components/schemas/Error'
 
 
 components:
   schemas:
     Player:
+      type: object
       required:
         - name
         - age
@@ -312,9 +322,10 @@ components:
     Players:
       type: array
       items:
-        $ref: "#/components/schemas/Player"
+        $ref: "hangmanapi.yaml#/components/schemas/Player"
 
     Guess:
+      type: object
       required:
         - letter
       properties:
@@ -322,6 +333,7 @@ components:
           type: string
 
     Game:
+      type: object
       required:
         - player
         - guesses
@@ -353,9 +365,10 @@ components:
     Games:
       type: array
       items:
-        $ref: "#/components/schemas/Game"
+        $ref: "hangmanapi.yaml#/components/schemas/Game"
 
     Error:
+      type: object
       required:
         - code
         - message
