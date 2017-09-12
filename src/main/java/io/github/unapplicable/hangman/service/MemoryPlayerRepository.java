@@ -1,12 +1,13 @@
 package io.github.unapplicable.hangman.service;
 
+import rx.Observable;
 import rx.Single;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public class MemoryPlayerStorage implements PlayerStorage {
+public class MemoryPlayerRepository implements PlayerRepository {
     private Map<String, Player> players = new HashMap<>();
 
     public Single<Player> fetch(String playerId) {
@@ -27,5 +28,9 @@ public class MemoryPlayerStorage implements PlayerStorage {
         players.put(String.valueOf(players.size() + 1), player);
 
         return Single.just(player);
+    }
+
+    public Observable<Player> list() {
+        return Observable.from(players.values());
     }
 }

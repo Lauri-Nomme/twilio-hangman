@@ -1,19 +1,24 @@
 package io.github.unapplicable.hangman.service;
 
+import rx.Observable;
 import rx.Single;
 
 public class PlayerServiceImpl implements PlayerService {
-    private final PlayerStorage playerStorage;
+    private final PlayerRepository playerRepository;
 
-    public PlayerServiceImpl(PlayerStorage playerStorage) {
-        this.playerStorage = playerStorage;
+    public PlayerServiceImpl(PlayerRepository playerRepository) {
+        this.playerRepository = playerRepository;
     }
 
     public Single<Player> fetch(String playerId) {
-        return playerStorage.fetch(playerId);
+        return playerRepository.fetch(playerId);
     }
 
     public Single<Player> create(Player player) {
-        return playerStorage.create(player);
+        return playerRepository.create(player);
+    }
+
+    public Observable<Player> list() {
+        return playerRepository.list();
     }
 }

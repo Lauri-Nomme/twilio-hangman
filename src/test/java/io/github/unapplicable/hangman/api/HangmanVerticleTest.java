@@ -2,6 +2,7 @@ package io.github.unapplicable.hangman.api;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -133,7 +134,8 @@ public class HangmanVerticleTest {
                 HttpResponse<Buffer> response = ar.result();
                 ctx.assertEquals(response.statusCode(), 200);
                 try {
-                    JsonObject body = response.bodyAsJsonObject();
+                    JsonArray body = response.bodyAsJsonArray();
+                    ctx.assertTrue(body.size() > 0, "response has player objects");
                     // @todo assert
                     async.complete();
                 } catch (Exception ex) {

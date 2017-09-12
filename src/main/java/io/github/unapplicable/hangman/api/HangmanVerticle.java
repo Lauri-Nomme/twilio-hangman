@@ -6,10 +6,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RequestParameter;
 import io.vertx.ext.web.RequestParameters;
 import io.vertx.rx.java.RxHelper;
+import io.vertx.rxjava.core.http.HttpServerResponse;
 import io.vertx.rxjava.ext.web.Router;
 import io.vertx.rxjava.ext.web.RoutingContext;
 import io.vertx.rxjava.ext.web.designdriven.OpenAPI3RouterFactory;
+import rx.Observable;
 import rx.Single;
+import rx.observables.SyncOnSubscribe;
 
 import java.util.NoSuchElementException;
 
@@ -18,9 +21,9 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        PlayerStorage playerStorage = new MemoryPlayerStorage();
-        playerStorage.create(new Player("player1", 1));
-        playerService = new PlayerServiceImpl(playerStorage);
+        PlayerRepository playerRepository = new MemoryPlayerRepository();
+        playerRepository.create(new Player("player1", 1));
+        playerService = new PlayerServiceImpl(playerRepository);
 
         createRouterFactory().subscribe(
             rf -> {
@@ -55,7 +58,26 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
     }
 
     private void listPlayers(RoutingContext ctx) {
+        Observable<Player> playersO = playerService.list();
+        HttpServerResponse response = ctx.response();
 
+        streamJsonObjectArray(playersO, response);
+    }
+
+    private <O> void streamJsonObjectArray(Observable<O> objectsO, HttpServerResponse response) {
+        response.setChunked(true);
+        Observable<String> joinerO = Observable.create(SyncOnSubscribe.createStateful(() -> "[", (s, o) -> {
+            o.onNext(s);
+            return ",";
+        }));
+        joinerO
+            .zipWith(objectsO, (joiner, object) -> joiner.concat(JsonObject.mapFrom(object).encodePrettily()))
+            .subscribe(
+                response::write,
+                error -> {
+                    response.setStatusCode(500).end(error.getMessage()); // @todo Error & serialization. ctx.fail + failureHandler
+                },
+                () -> response.end("]"));
     }
 
     private void fetchPlayerInfo(RoutingContext ctx) {
