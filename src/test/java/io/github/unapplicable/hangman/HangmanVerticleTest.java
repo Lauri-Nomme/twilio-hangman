@@ -34,7 +34,7 @@ public class HangmanVerticleTest {
         vertx.createHttpClient().getNow(port, "localhost", "/player/1234",
             response -> {
                 ctx.assertEquals(response.statusCode(), 404);
-                response.handler(body -> async.complete());
+                async.complete();
             });
     }
 }

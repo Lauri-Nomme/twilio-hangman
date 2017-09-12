@@ -10,9 +10,14 @@ import io.vertx.rxjava.ext.web.RoutingContext;
 import io.vertx.rxjava.ext.web.designdriven.OpenAPI3RouterFactory;
 import rx.Single;
 
+import java.util.NoSuchElementException;
+
 public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
+    private PlayerService playerService;
+
     @Override
     public void start(Future<Void> startFuture) throws Exception {
+        playerService = new PlayerService();
         createRouterFactory().subscribe(
             rf -> {
                 Router router = registerHandlers(rf).getRouter();
@@ -42,7 +47,20 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
     }
 
     private void fetchPlayerInfo(RoutingContext ctx) {
-        ctx.response().end("yep");
+        RequestParameters params = ctx.get("parsedParameters");
+        String playerId = params.pathParameter("playerId").getString();
+        Single<Player> playerS = playerService.fetch(playerId);
+        playerS.subscribe(player -> {
+                ctx.response().end("{}"); // @todo serialize
+            },
+            error -> {
+                if (error instanceof NoSuchElementException) {
+                    ctx.response().setStatusCode(404).end();
+                    return;
+                }
+
+                ctx.response().setStatusCode(500).end(error.getMessage());
+            });
     }
 
     private void createPlayer(RoutingContext ctx) {
