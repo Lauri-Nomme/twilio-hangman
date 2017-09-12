@@ -162,4 +162,34 @@ public class HangmanVerticleTest {
                     async.complete();
                 });
     }
+
+    @Test
+    public void testStartGame_ExistingPlayer_Succeeds(TestContext ctx) throws Exception {
+        final Async async = ctx.async();
+        WebClient client = WebClient.create(vertx);
+        String testName = "player1";
+        int testAge = 1;
+
+        client.post(port, host, rootPath + "/game")
+            .sendJsonObject(
+                new JsonObject()
+                    .put("name", testName)
+                    .put("age", testAge),
+                ar -> {
+                    ctx.assertTrue(ar.succeeded());
+                    HttpResponse<Buffer> response = ar.result();
+                    ctx.assertEquals(response.statusCode(), 200);
+                    try {
+                        JsonObject body = response.bodyAsJsonObject();
+                        ctx.assertEquals(testName, body.getJsonObject("player").getString("name"));
+                        ctx.assertEquals("ongoing", body.getString("gameStatus"));
+                        ctx.assertEquals(0, body.getInteger("guesses"));
+                        ctx.assertEquals(6, body.getInteger("guessesLeft"));
+                        ctx.assertEquals("", body.getString("incorrectLetters"));
+                        async.complete();
+                    } catch (Exception ex) {
+                        ctx.fail(ex);
+                    }
+                });
+    }
 }

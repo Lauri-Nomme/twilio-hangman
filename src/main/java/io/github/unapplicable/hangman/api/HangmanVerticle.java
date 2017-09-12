@@ -14,6 +14,8 @@ import rx.Observable;
 import rx.Single;
 import rx.observables.SyncOnSubscribe;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.NoSuchElementException;
 
 public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
@@ -25,7 +27,8 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         PlayerRepository playerRepository = new MemoryPlayerRepository();
         playerRepository.create(new Player("player1", 1));
         playerService = new PlayerServiceImpl(playerRepository);
-        gameService = new GameServiceImpl(playerRepository);
+        WordList wordList = createWordList();
+        gameService = new GameServiceImpl(playerRepository, wordList);
 
         createRouterFactory().subscribe(
             rf -> {
@@ -40,6 +43,10 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
                     .toCompletable()
                     .subscribe(RxHelper.toSubscriber(startFuture));
             }, startFuture::fail);
+    }
+
+    private WordList createWordList() throws IOException, URISyntaxException {
+        return new WordList(HangmanVerticle.class.getResourceAsStream("/wordlist.txt"));
     }
 
     private Single<OpenAPI3RouterFactory> createRouterFactory() {

@@ -4,9 +4,11 @@ import rx.Single;
 
 public class GameServiceImpl implements GameService {
     private final PlayerRepository playerRepository;
+    private WordList wordList;
 
-    public GameServiceImpl(PlayerRepository playerRepository) {
+    public GameServiceImpl(PlayerRepository playerRepository, WordList wordList) {
         this.playerRepository = playerRepository;
+        this.wordList = wordList;
     }
 
     public Single<Game> start(String playerName) {
@@ -16,7 +18,8 @@ public class GameServiceImpl implements GameService {
     }
 
     private Single<Game> startWithPlayer(Player player) {
-        Game game = new Game(player);
+        String word = wordList.getRandom();
+        Game game = new Game(player, word);
         return Single.just(game);
     }
 }
