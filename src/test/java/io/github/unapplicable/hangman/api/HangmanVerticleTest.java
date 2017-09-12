@@ -136,11 +136,30 @@ public class HangmanVerticleTest {
                 try {
                     JsonArray body = response.bodyAsJsonArray();
                     ctx.assertTrue(body.size() > 0, "response has player objects");
-                    // @todo assert
                     async.complete();
                 } catch (Exception ex) {
                     ctx.fail(ex);
                 }
             });
+    }
+
+    @Test
+    public void testStartGame_NonExistentPlayer_Fails(TestContext ctx) throws Exception {
+        final Async async = ctx.async();
+        WebClient client = WebClient.create(vertx);
+        String testName = "no-such-player";
+        int testAge = 1;
+
+        client.post(port, host, rootPath + "/game")
+            .sendJsonObject(
+                new JsonObject()
+                    .put("name", testName)
+                    .put("age", testAge),
+                ar -> {
+                    ctx.assertTrue(ar.succeeded());
+                    HttpResponse<Buffer> response = ar.result();
+                    ctx.assertEquals(response.statusCode(), 400);
+                    async.complete();
+                });
     }
 }

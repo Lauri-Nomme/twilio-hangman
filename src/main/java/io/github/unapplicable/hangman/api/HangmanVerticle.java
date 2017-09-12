@@ -18,12 +18,14 @@ import java.util.NoSuchElementException;
 
 public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
     private PlayerService playerService;
+    private GameService gameService;
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
         PlayerRepository playerRepository = new MemoryPlayerRepository();
         playerRepository.create(new Player("player1", 1));
         playerService = new PlayerServiceImpl(playerRepository);
+        gameService = new GameServiceImpl(playerRepository);
 
         createRouterFactory().subscribe(
             rf -> {
@@ -60,7 +62,23 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
     }
 
     private void startGame(RoutingContext ctx) {
+        RequestParameters params = ctx.get("parsedParameters");
+        RequestParameter body = params.body();
+        JsonObject jsonBody = body.getJsonObject();
+        String playerName = jsonBody.getString("name");
 
+        Single<Game> gameS = gameService.start(playerName);
+        gameS.subscribe(game -> {
+                ctx.response().end(JsonObject.mapFrom(game).encodePrettily());
+            },
+            error -> {
+                if (error instanceof RuntimeException) {
+                    ctx.response().setStatusCode(400).end();
+                    return;
+                }
+
+                ctx.response().setStatusCode(500).end(error.getMessage()); // @todo Error & serialization
+            });
     }
 
     private void listPlayers(RoutingContext ctx) {
