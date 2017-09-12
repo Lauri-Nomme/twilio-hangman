@@ -1,5 +1,8 @@
-package io.github.unapplicable.hangman;
+package io.github.unapplicable.hangman.api;
 
+import io.github.unapplicable.hangman.service.Player;
+import io.github.unapplicable.hangman.service.PlayerService;
+import io.github.unapplicable.hangman.service.PlayerServiceImpl;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RequestParameter;
@@ -17,7 +20,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        playerService = new PlayerService();
+        playerService = new PlayerServiceImpl();
         createRouterFactory().subscribe(
             rf -> {
                 Router router = registerHandlers(rf).getRouter();
@@ -32,7 +35,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
 
     private Single<OpenAPI3RouterFactory> createRouterFactory() {
         try {
-            String filename = HangmanVerticle.class.getResource("hangmanapi.yaml").toURI().toURL().toString();
+            String filename = HangmanVerticle.class.getResource("/hangmanapi.yaml").toURI().toURL().toString();
 
             return OpenAPI3RouterFactory.rxCreateRouterFactoryFromURL(vertx, filename);
         } catch (Exception ex) {

@@ -1,4 +1,4 @@
-package io.github.unapplicable.hangman;
+package io.github.unapplicable.hangman.api;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
