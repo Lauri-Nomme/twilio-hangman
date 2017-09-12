@@ -2,14 +2,18 @@ package io.github.unapplicable.hangman.service;
 
 import rx.Single;
 
-import java.util.NoSuchElementException;
-
 public class PlayerServiceImpl implements PlayerService {
+    private final PlayerStorage playerStorage;
+
+    public PlayerServiceImpl(PlayerStorage playerStorage) {
+        this.playerStorage = playerStorage;
+    }
+
     public Single<Player> fetch(String playerId) {
-        return Single.error(new NoSuchElementException());
+        return playerStorage.fetch(playerId);
     }
 
     public Single<Player> create(Player player) {
-        return Single.just(player);
+        return playerStorage.create(player);
     }
 }

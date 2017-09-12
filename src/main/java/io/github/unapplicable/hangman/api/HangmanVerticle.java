@@ -1,8 +1,6 @@
 package io.github.unapplicable.hangman.api;
 
-import io.github.unapplicable.hangman.service.Player;
-import io.github.unapplicable.hangman.service.PlayerService;
-import io.github.unapplicable.hangman.service.PlayerServiceImpl;
+import io.github.unapplicable.hangman.service.*;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RequestParameter;
@@ -20,7 +18,10 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-        playerService = new PlayerServiceImpl();
+        PlayerStorage playerStorage = new MemoryPlayerStorage();
+        playerStorage.create(new Player("player1", 1));
+        playerService = new PlayerServiceImpl(playerStorage);
+
         createRouterFactory().subscribe(
             rf -> {
                 Router router = registerHandlers(rf).getRouter();
@@ -71,6 +72,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         RequestParameter body = params.body();
         JsonObject jsonBody = body.getJsonObject();
         Player requestPlayer = new Player(jsonBody.getString("name"), jsonBody.getInteger("age"));
+
         Single<Player> playerS = playerService.create(requestPlayer);
         playerS.subscribe(player -> {
                 ctx.response().end(JsonObject.mapFrom(player).encodePrettily());
