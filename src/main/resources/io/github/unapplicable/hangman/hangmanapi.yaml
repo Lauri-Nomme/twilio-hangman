@@ -1,0 +1,367 @@
+openapi: "3.0.0"
+info:
+  title: "Hangman API"
+  version: "1.0.0"
+  license:
+    name: "Apache 2.0"
+    url: "https://www.apache.org/licenses/LICENSE-2.0.html"
+  description: |
+    This is Hangman API. Hangman is a simple game where one has to guess a word by proposing letters. For every incorrect letter a part of the hangman picture is drawn. If the picture is finished before the word has been correctly guessed the player looses.
+
+    Further information on the game can be found in [Wikipedia](https://en.wikipedia.org/wiki/Hangman_(game)).
+
+    Using this API you can integrate Hangman game into your products, applications, refigerators or wherever you want to.
+
+servers:
+  - url: http://localhost/hangman/v1
+
+paths:
+  #
+  # Main entry to the games
+  #
+  /game:
+    #
+    # Lists games
+    #
+    get:
+      summary: "Fetches all games"
+
+      description: |
+        This API call allows you to fetch all the games that have ever existed.
+
+      operationId: listGames
+
+      tags:
+        - game
+
+      responses:
+        '200':
+          description: "List of games returned successfully."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Games'
+        default:
+          description: 'Unexpected error'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    #
+    # Creates a game
+    #
+    post:
+      summary: "Starts a new game."
+
+      description: |
+        Starts a new game for a player. Player object is used as a body to the request.
+
+      operationId: startGame
+
+      requestBody:
+        description: "Player object"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Player'
+
+      tags:
+        - game
+
+      responses:
+        '200':
+          description: "Game was started successfully."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        default:
+          description: "Unexpected error."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  #
+  # Fetches single game
+  #
+  /game/{gameId}:
+    get:
+      summary: "Fetches game information"
+
+      description: |
+        This API call allows you to get information about a single game. It returns the game object.
+
+      operationId: fetchGameInfo
+
+      tags:
+        - game
+
+      parameters:
+        - name: gameId
+          in: path
+          description: "ID of the game."
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: "Game info was fetched successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '404':
+          description: "Game does not exist."
+        default:
+          description: "Unexpected error"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    #
+    # Makes a guess of the letter
+    #
+    put:
+      summary: "Guess a letter in the game."
+
+      description: |
+        This API call allows you to guess a letter in ongoing game. If you guess incorrectly and your number of guesses is full the game ends.
+
+        If you guess the letter correctly the game continues. Guessing of the whole word is not available in version 1.
+      operationId: guess
+
+      tags:
+        - game
+
+      parameters:
+        - name: gameId
+          in: path
+          description: "ID of the game to guess"
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+        description: "Guess to be made."
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Guess'
+
+      responses:
+        '200':
+          description: "Guess was made successfully."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '400':
+          description: "Guess was not made."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    #
+    # Gives up the game.
+    #
+    delete:
+      summary: "Gives up."
+
+      description: |
+        This API call allows you to give up on a game. It ends the game and returns the game object with word revealed.
+
+        Game is marked as lost.
+      tags:
+        - game
+
+      parameters:
+        - name: gameId
+          in: path
+          description: "ID of the game to guess"
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: "Game ended."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '404':
+          description: "Game was not found."
+        default:
+          description: "Unexpected error"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /player:
+    get:
+      summary: "List players."
+
+      description: |
+        This API call allows to list all players that have registered.
+
+      tags:
+        - player
+      responses:
+        '200':
+          description: "Players fetched successfuly."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Players'
+        default:
+          description: "Unexpected error"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: "Create player."
+
+      description: |
+        This API call allows to create a new player. If the player name is already taken 400 error is thrown.
+
+      requestBody:
+        description: "Player object"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Player'
+
+      tags:
+        - player
+
+      responses:
+        '200':
+          description: "Player created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+        '400':
+          description: "Player already exists"
+        default:
+          description: "Unexpected error"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /player/{playerId}:
+    get:
+      summary: "Fetch player information."
+
+      description: |
+        This API call allows you to fetch the player information object.
+
+      tags:
+        - player
+
+      parameters:
+        - name: playerId
+          in: path
+          description: "Player ID"
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: 'Player info fetched.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+        '404':
+          description: 'Player was not found'
+        default:
+          description: "Unexpected error"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+components:
+  schemas:
+    Player:
+      required:
+        - name
+        - age
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+          format: int32
+
+    Players:
+      type: array
+      items:
+        $ref: "#/components/schemas/Player"
+
+    Guess:
+      required:
+        - letter
+      properties:
+        letter:
+          type: string
+
+    Game:
+      required:
+        - player
+        - guesses
+        - guessesLeft
+        - guessedWord
+        - incorrectLetters
+        - gameStatus
+      properties:
+        player:
+          type: string
+        guesses:
+          type: integer
+          description: "Indicates the number of guesses made."
+        guessesLeft:
+          type: integer
+          description: "Indicates the number of guesses left."
+        guessedWord:
+          type: string
+          description: |
+            Contains the word with guessed letters. Letters not yet guessed are replaced with asterisks (*)
+        incorrectLetters:
+          type: string
+          description: |
+            Contains all the letters that have been proposed but turned out incorrect.
+        gameStatus:
+          type: string
+          enum: [ongoing, won, lost]
+
+    Games:
+      type: array
+      items:
+        $ref: "#/components/schemas/Game"
+
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
