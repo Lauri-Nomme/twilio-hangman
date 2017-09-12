@@ -54,7 +54,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         String playerId = params.pathParameter("playerId").getString();
         Single<Player> playerS = playerService.fetch(playerId);
         playerS.subscribe(player -> {
-                ctx.response().end("{}"); // @todo serialize
+                ctx.response().end(JsonObject.mapFrom(player).encodePrettily());
             },
             error -> {
                 if (error instanceof NoSuchElementException) {
@@ -62,18 +62,27 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
                     return;
                 }
 
-                ctx.response().setStatusCode(500).end(error.getMessage());
+                ctx.response().setStatusCode(500).end(error.getMessage()); // @todo Error & serialization
             });
     }
 
     private void createPlayer(RoutingContext ctx) {
         RequestParameters params = ctx.get("parsedParameters");
         RequestParameter body = params.body();
-        if (body != null) {
-            JsonObject jsonBody = body.getJsonObject();
-        }
+        JsonObject jsonBody = body.getJsonObject();
+        Player requestPlayer = new Player(jsonBody.getString("name"), jsonBody.getInteger("age"));
+        Single<Player> playerS = playerService.create(requestPlayer);
+        playerS.subscribe(player -> {
+                ctx.response().end(JsonObject.mapFrom(player).encodePrettily());
+            },
+            error -> {
+                if (error instanceof RuntimeException) {
+                    ctx.response().setStatusCode(400).end();
+                    return;
+                }
 
-        ctx.response().end("yep");
+                ctx.response().setStatusCode(500).end(error.getMessage()); // @todo Error & serialization
+            });
     }
 
     private void handleFailure(RoutingContext ctx) {

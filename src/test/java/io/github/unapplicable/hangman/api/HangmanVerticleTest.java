@@ -1,9 +1,13 @@
 package io.github.unapplicable.hangman.api;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,5 +40,36 @@ public class HangmanVerticleTest {
                 ctx.assertEquals(response.statusCode(), 404);
                 async.complete();
             });
+    }
+
+    @Test
+    public void testCreatePlayer_UnusedName_Succeeds(TestContext ctx) throws Exception {
+        final Async async = ctx.async();
+        WebClient client = WebClient.create(vertx);
+        String testName = "player1";
+        int testAge = 1;
+
+        client.post(port, "localhost", "/player")
+            .sendJsonObject(
+                new JsonObject()
+                    .put("name", testName)
+                    .put("age", testAge),
+                ar -> {
+                    ctx.assertTrue(ar.succeeded());
+                    HttpResponse<Buffer> response = ar.result();
+                    ctx.assertEquals(response.statusCode(), 200);
+
+                    try {
+                        JsonObject body = response.bodyAsJsonObject();
+                        String name = body.getString("name");
+                        ctx.assertEquals(testName, name);
+
+                        Integer age = body.getInteger("age");
+                        ctx.assertEquals(testAge, age);
+                        async.complete();
+                    } catch (Exception ex) {
+                        ctx.fail(ex);
+                    }
+                });
     }
 }
