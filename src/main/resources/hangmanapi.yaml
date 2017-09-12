@@ -13,7 +13,7 @@ info:
     Using this API you can integrate Hangman game into your products, applications, refigerators or wherever you want to.
 
 servers:
-  - url: http://localhost/hangman/v1
+  - url: http://localhost:8080/hangman/v1
 
 paths:
   #

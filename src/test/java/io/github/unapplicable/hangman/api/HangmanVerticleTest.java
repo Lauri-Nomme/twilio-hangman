@@ -17,10 +17,14 @@ import org.junit.runner.RunWith;
 public class HangmanVerticleTest {
     private Vertx vertx;
     private int port;
+    private String host;
+    private String rootPath;
 
     @Before
     public void setUp(TestContext ctx) {
+        host = "localhost";
         port = 8080;
+        rootPath = "/hangman/v1";
         vertx = Vertx.vertx();
         vertx.deployVerticle(HangmanVerticle.class.getName(),
             ctx.asyncAssertSuccess());
@@ -35,7 +39,7 @@ public class HangmanVerticleTest {
     public void testFetchPlayerInfo_NonExistentPlayer_ReturnsNotFound(TestContext ctx) {
         final Async async = ctx.async();
         WebClient client = WebClient.create(vertx);
-        client.get(port, "localhost", "/player/1234").send(
+        client.get(port, host, rootPath + "/player/1234").send(
             ar -> {
                 ctx.assertTrue(ar.succeeded());
                 HttpResponse<Buffer> response = ar.result();
@@ -51,7 +55,7 @@ public class HangmanVerticleTest {
         String testName = "player2";
         int testAge = 1;
 
-        client.post(port, "localhost", "/player")
+        client.post(port, host, rootPath + "/player")
             .sendJsonObject(
                 new JsonObject()
                     .put("name", testName)
@@ -78,7 +82,7 @@ public class HangmanVerticleTest {
         String testName = "player1";
         int testAge = 1;
 
-        client.post(port, "localhost", "/player")
+        client.post(port, host, rootPath + "/player")
             .sendJsonObject(
                 new JsonObject()
                     .put("name", testName)
@@ -104,7 +108,7 @@ public class HangmanVerticleTest {
     public void testFetchPlayerInfo_ExistingPlayer_Succeeds(TestContext ctx) {
         final Async async = ctx.async();
         WebClient client = WebClient.create(vertx);
-        client.get(port, "localhost", "/player/1").send(
+        client.get(port, host, rootPath + "/player/1").send(
             ar -> {
                 ctx.assertTrue(ar.succeeded());
                 HttpResponse<Buffer> response = ar.result();
@@ -112,6 +116,25 @@ public class HangmanVerticleTest {
                 try {
                     JsonObject body = response.bodyAsJsonObject();
                     assertPlayer(ctx, body, "player1", 1);
+                    async.complete();
+                } catch (Exception ex) {
+                    ctx.fail(ex);
+                }
+            });
+    }
+
+    @Test
+    public void testListPlayers_Succeeds(TestContext ctx) {
+        final Async async = ctx.async();
+        WebClient client = WebClient.create(vertx);
+        client.get(port, host, rootPath + "/player").send(
+            ar -> {
+                ctx.assertTrue(ar.succeeded());
+                HttpResponse<Buffer> response = ar.result();
+                ctx.assertEquals(response.statusCode(), 200);
+                try {
+                    JsonObject body = response.bodyAsJsonObject();
+                    // @todo assert
                     async.complete();
                 } catch (Exception ex) {
                     ctx.fail(ex);

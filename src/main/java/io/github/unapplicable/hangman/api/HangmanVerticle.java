@@ -24,7 +24,10 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
 
         createRouterFactory().subscribe(
             rf -> {
-                Router router = registerHandlers(rf).getRouter();
+                Router hangmanApiRouter = registerHandlers(rf).getRouter();
+                Router router = Router
+                    .router(vertx)
+                    .mountSubRouter("/hangman/v1", hangmanApiRouter);
                 vertx
                     .createHttpServer()
                     .requestHandler(router::accept)
@@ -47,7 +50,12 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
     private OpenAPI3RouterFactory registerHandlers(OpenAPI3RouterFactory rf) {
         rf.addHandlerByOperationId("fetchPlayerInfo", this::fetchPlayerInfo, this::handleFailure);
         rf.addHandlerByOperationId("createPlayer", this::createPlayer, this::handleFailure);
+        rf.addHandlerByOperationId("listPlayers", this::listPlayers, this::handleFailure);
         return rf;
+    }
+
+    private void listPlayers(RoutingContext ctx) {
+
     }
 
     private void fetchPlayerInfo(RoutingContext ctx) {
@@ -63,7 +71,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
                     return;
                 }
 
-                ctx.response().setStatusCode(500).end(error.getMessage()); // @todo Error & serialization
+                ctx.response().setStatusCode(500).end(error.getMessage()); // @todo Error & serialization. ctx.fail + failureHandler
             });
     }
 
