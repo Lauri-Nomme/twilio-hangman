@@ -20,12 +20,12 @@ public class MemoryPlayerRepository implements PlayerRepository {
     }
 
     public Single<Player> create(Player player) {
-        Boolean duplicateName = players.values().stream().anyMatch(p -> player.getName().equals(p.getName()));
+        Boolean duplicateName = players.containsKey(player.getName());
         if (duplicateName) {
             return Single.error(new RuntimeException("Player name taken"));
         }
 
-        players.put(String.valueOf(players.size() + 1), player);
+        players.put(player.getName(), player);
 
         return Single.just(player);
     }

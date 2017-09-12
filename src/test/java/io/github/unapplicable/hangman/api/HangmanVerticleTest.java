@@ -109,7 +109,7 @@ public class HangmanVerticleTest {
     public void testFetchPlayerInfo_ExistingPlayer_Succeeds(TestContext ctx) {
         final Async async = ctx.async();
         WebClient client = WebClient.create(vertx);
-        client.get(port, host, rootPath + "/player/1").send(
+        client.get(port, host, rootPath + "/player/player1").send(
             ar -> {
                 ctx.assertTrue(ar.succeeded());
                 HttpResponse<Buffer> response = ar.result();

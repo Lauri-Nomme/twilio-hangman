@@ -54,7 +54,13 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         rf.addHandlerByOperationId("fetchPlayerInfo", this::fetchPlayerInfo, this::handleFailure);
         rf.addHandlerByOperationId("createPlayer", this::createPlayer, this::handleFailure);
         rf.addHandlerByOperationId("listPlayers", this::listPlayers, this::handleFailure);
+
+        rf.addHandlerByOperationId("startGame", this::startGame, this::handleFailure);
         return rf;
+    }
+
+    private void startGame(RoutingContext ctx) {
+
     }
 
     private void listPlayers(RoutingContext ctx) {
