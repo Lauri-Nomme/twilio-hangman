@@ -9,6 +9,8 @@ public interface GameService {
 
     Single<Game> guess(String gameId, String letter);
 
+    Single<Game> giveUp(String gameId);
+
     Single<Game> fetch(String gameId);
 
     Observable<Game> list();

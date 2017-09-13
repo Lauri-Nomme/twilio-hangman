@@ -45,6 +45,16 @@ public class Game {
         }
     }
 
+    public Game(Game game, boolean continuePlaying) {
+        player = game.player;
+        guesses = game.guesses;
+        word = game.word;
+        guessedWord = game.word;
+        incorrectLetters = game.incorrectLetters;
+        guessesLeft = game.guessesLeft;
+        gameStatus = Status.lost;
+    }
+
     private static String revealLetter(String gw, String w, String letter) {
         StringBuilder guessedWordBuilder = new StringBuilder(gw);
         Integer matchPos = -1;
@@ -66,6 +76,14 @@ public class Game {
         }
 
         return Single.just(new Game(this, letter));
+    }
+
+    public Single<Game> giveUp() {
+        if (gameStatus != Status.ongoing) {
+            return Single.error(new BadRequest("Game status not ongoing"));
+        }
+
+        return Single.just(new Game(this, false));
     }
 
     public Integer getGuesses() {

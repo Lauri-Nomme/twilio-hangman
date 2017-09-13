@@ -36,6 +36,13 @@ public class GameServiceImpl implements GameService {
             .flatMap(game -> gameRepository.update(gameId, game));
     }
 
+    public Single<Game> giveUp(String gameId) {
+        return gameRepository
+            .fetch(gameId)
+            .flatMap(game -> game.giveUp())
+            .flatMap(game -> gameRepository.update(gameId, game));
+    }
+
     private Single<Pair<String, Game>> startWithPlayer(Player player) {
         String word = wordList.getRandom();
         Game game = new Game(player, word);

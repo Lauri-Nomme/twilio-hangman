@@ -68,6 +68,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
 
         rf.addHandlerByOperationId("startGame", this::startGame, this::handleFailure);
         rf.addHandlerByOperationId("guess", this::guess, this::handleFailure);
+        rf.addHandlerByOperationId("giveUp", this::giveUp, this::handleFailure);
         rf.addHandlerByOperationId("fetchGameInfo", this::fetchGameInfo, this::handleFailure);
         rf.addHandlerByOperationId("listGames", this::listGames, this::handleFailure);
         return rf;
@@ -96,6 +97,15 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         String letter = jsonBody.getString("letter");
 
         Single<Game> gameS = gameService.guess(gameId, letter);
+        HttpServerResponse response = ctx.response();
+        gameS.subscribe(game -> respondJsonObject(response, game), ctx::fail);
+    }
+
+    private void giveUp(RoutingContext ctx) {
+        RequestParameters params = ctx.get("parsedParameters");
+        String gameId = params.pathParameter("gameId").getString();
+
+        Single<Game> gameS = gameService.giveUp(gameId);
         HttpServerResponse response = ctx.response();
         gameS.subscribe(game -> respondJsonObject(response, game), ctx::fail);
     }
