@@ -62,12 +62,14 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
     }
 
     private OpenAPI3RouterFactory registerHandlers(OpenAPI3RouterFactory rf) {
-        rf.addHandlerByOperationId("fetchPlayerInfo", this::fetchPlayerInfo, this::handleFailure);
         rf.addHandlerByOperationId("createPlayer", this::createPlayer, this::handleFailure);
+        rf.addHandlerByOperationId("fetchPlayerInfo", this::fetchPlayerInfo, this::handleFailure);
         rf.addHandlerByOperationId("listPlayers", this::listPlayers, this::handleFailure);
 
         rf.addHandlerByOperationId("startGame", this::startGame, this::handleFailure);
         rf.addHandlerByOperationId("guess", this::guess, this::handleFailure);
+        rf.addHandlerByOperationId("fetchGameInfo", this::fetchGameInfo, this::handleFailure);
+        rf.addHandlerByOperationId("listGames", this::listGames, this::handleFailure);
         return rf;
     }
 
@@ -96,6 +98,21 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         Single<Game> gameS = gameService.guess(gameId, letter);
         HttpServerResponse response = ctx.response();
         gameS.subscribe(game -> respondJsonObject(response, game), ctx::fail);
+    }
+
+    private void fetchGameInfo(RoutingContext ctx) {
+        RequestParameters params = ctx.get("parsedParameters");
+        String gameId = params.pathParameter("gameId").getString();
+
+        Single<Game> gameS = gameService.fetch(gameId);
+        HttpServerResponse response = ctx.response();
+        gameS.subscribe(game -> respondJsonObject(response, game), ctx::fail);
+    }
+
+    private void listGames(RoutingContext ctx) {
+        Observable<Game> gamesO = gameService.list();
+
+        streamJsonObjectArray(gamesO, ctx);
     }
 
     private void listPlayers(RoutingContext ctx) {

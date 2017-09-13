@@ -10,12 +10,12 @@ public class PlayerServiceImpl implements PlayerService {
         this.playerRepository = playerRepository;
     }
 
-    public Single<Player> fetch(String playerId) {
-        return playerRepository.fetch(playerId);
-    }
-
     public Single<Player> create(Player player) {
         return playerRepository.create(player);
+    }
+
+    public Single<Player> fetch(String playerId) {
+        return playerRepository.fetch(playerId);
     }
 
     public Observable<Player> list() {

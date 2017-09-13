@@ -11,15 +11,6 @@ import java.util.Map;
 public class MemoryPlayerRepository implements PlayerRepository {
     private final Map<String, Player> players = new HashMap<>();
 
-    public Single<Player> fetch(String playerId) {
-        Player player = players.get(playerId);
-        if (null == player) {
-            return Single.error(new NotFound("Player not found, id " + playerId));
-        }
-
-        return Single.just(player);
-    }
-
     public Single<Player> create(Player player) {
         Boolean duplicateName = players.containsKey(player.getName());
         if (duplicateName) {
@@ -27,6 +18,15 @@ public class MemoryPlayerRepository implements PlayerRepository {
         }
 
         players.put(player.getName(), player);
+
+        return Single.just(player);
+    }
+
+    public Single<Player> fetch(String playerId) {
+        Player player = players.get(playerId);
+        if (null == player) {
+            return Single.error(new NotFound("Player not found, id " + playerId));
+        }
 
         return Single.just(player);
     }

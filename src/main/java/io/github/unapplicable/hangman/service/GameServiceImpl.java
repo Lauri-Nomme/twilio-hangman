@@ -1,6 +1,7 @@
 package io.github.unapplicable.hangman.service;
 
 import javafx.util.Pair;
+import rx.Observable;
 import rx.Single;
 
 public class GameServiceImpl implements GameService {
@@ -18,6 +19,14 @@ public class GameServiceImpl implements GameService {
         return playerRepository
             .fetch(playerName)
             .flatMap(this::startWithPlayer);
+    }
+
+    public Single<Game> fetch(String gameId) {
+        return gameRepository.fetch(gameId);
+    }
+
+    public Observable<Game> list() {
+        return gameRepository.list();
     }
 
     public Single<Game> guess(String gameId, String letter) {
