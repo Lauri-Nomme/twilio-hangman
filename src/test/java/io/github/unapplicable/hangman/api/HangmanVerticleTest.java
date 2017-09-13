@@ -228,8 +228,8 @@ public class HangmanVerticleTest {
                 try {
                     JsonObject body = response.bodyAsJsonObject();
                     ctx.assertEquals("won", body.getString("gameStatus"));
-                    ctx.assertEquals(6, body.getInteger("guesses"));
-                    ctx.assertEquals(0, body.getInteger("guessesLeft"));
+                    ctx.assertEquals(5, body.getInteger("guesses"));
+                    ctx.assertEquals(6, body.getInteger("guessesLeft"));
                     async.complete();
                 } catch (Exception ex) {
                     ctx.fail(ex);
