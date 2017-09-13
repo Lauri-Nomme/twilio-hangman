@@ -17,7 +17,6 @@ import rx.Observable;
 import rx.Single;
 import rx.observables.SyncOnSubscribe;
 
-import java.io.IOException;
 import java.util.stream.Collectors;
 
 public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
@@ -27,7 +26,6 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
     @Override
     public void start(Future<Void> startFuture) throws Exception {
         PlayerRepository playerRepository = new MemoryPlayerRepository();
-        playerRepository.create(new Player("player1", 1));
         playerService = new PlayerServiceImpl(playerRepository);
         JsonArray overrideWordList = config().getJsonArray("wordlist");
         WordList wordList = null == overrideWordList ? createWordList() : createWordList(overrideWordList);
@@ -50,7 +48,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
             }, startFuture::fail);
     }
 
-    private WordList createWordList() throws IOException {
+    private WordList createWordList() {
         return new WordList(HangmanVerticle.class.getResourceAsStream("/wordlist.txt"));
     }
 
@@ -179,7 +177,8 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         HttpServerResponse response = ctx.response();
         response.setChunked(true);
         response.putHeader("Content-Type", "application/json");
-        Observable<String> joinerO = Observable.create(SyncOnSubscribe.createStateful(() -> "[", (s, o) -> {
+        response.write("[");
+        Observable<String> joinerO = Observable.create(SyncOnSubscribe.createStateful(() -> "", (s, o) -> {
             o.onNext(s);
             return ",";
         }));
