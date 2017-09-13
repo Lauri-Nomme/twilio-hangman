@@ -39,7 +39,7 @@ public class GameServiceImpl implements GameService {
     public Single<Game> giveUp(String gameId) {
         return gameRepository
             .fetch(gameId)
-            .flatMap(game -> game.giveUp())
+            .flatMap(Game::giveUp)
             .flatMap(game -> gameRepository.update(gameId, game));
     }
 

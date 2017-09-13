@@ -1,24 +1,26 @@
 package io.github.unapplicable.hangman.service;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.PrimitiveIterator;
 import java.util.Random;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class WordList {
     private final List<String> words;
     private final PrimitiveIterator.OfInt randomIterator;
 
     public WordList(InputStream stream) {
-        Stream<String> stringStream = new BufferedReader(new InputStreamReader(stream)).lines();
-        this.words = stringStream
+        this(new BufferedReader(new InputStreamReader(stream))
+            .lines()
             .map(String::toLowerCase)
-            .collect(Collectors.toList());
+            .collect(Collectors.toList()));
+    }
+
+    public WordList(List<String> words) {
+        this.words = words;
         randomIterator = new Random().ints(0, this.words.size()).iterator();
     }
 

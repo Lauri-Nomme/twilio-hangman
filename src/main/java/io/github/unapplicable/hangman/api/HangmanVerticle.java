@@ -3,6 +3,7 @@ package io.github.unapplicable.hangman.api;
 import io.github.unapplicable.hangman.service.*;
 import io.github.unapplicable.hangman.service.error.BaseError;
 import io.vertx.core.Future;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RequestParameter;
 import io.vertx.ext.web.RequestParameters;
@@ -17,6 +18,7 @@ import rx.Single;
 import rx.observables.SyncOnSubscribe;
 
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
     private PlayerService playerService;
@@ -27,7 +29,8 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         PlayerRepository playerRepository = new MemoryPlayerRepository();
         playerRepository.create(new Player("player1", 1));
         playerService = new PlayerServiceImpl(playerRepository);
-        WordList wordList = createWordList();
+        JsonArray overrideWordList = config().getJsonArray("wordlist");
+        WordList wordList = null == overrideWordList ? createWordList() : createWordList(overrideWordList);
         GameRepository gameRepository = new MemoryGameRepository();
         gameService = new GameServiceImpl(playerRepository, gameRepository, wordList);
 
@@ -41,7 +44,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
                 vertx
                     .createHttpServer()
                     .requestHandler(router::accept)
-                    .rxListen(8080)
+                    .rxListen(config().getInteger("http.port", 8080))
                     .toCompletable()
                     .subscribe(RxHelper.toSubscriber(startFuture));
             }, startFuture::fail);
@@ -49,6 +52,10 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
 
     private WordList createWordList() throws IOException {
         return new WordList(HangmanVerticle.class.getResourceAsStream("/wordlist.txt"));
+    }
+
+    private WordList createWordList(JsonArray overrideWordList) {
+        return new WordList(overrideWordList.stream().map(Object::toString).collect(Collectors.toList()));
     }
 
     private Single<OpenAPI3RouterFactory> createRouterFactory() {

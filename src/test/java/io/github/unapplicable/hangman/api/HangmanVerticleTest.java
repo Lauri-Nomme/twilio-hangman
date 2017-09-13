@@ -1,5 +1,6 @@
 package io.github.unapplicable.hangman.api;
 
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonArray;
@@ -14,21 +15,48 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.ArrayList;
+
 @RunWith(VertxUnitRunner.class)
 public class HangmanVerticleTest {
     private Vertx vertx;
     private int port;
     private String host;
     private String rootPath;
+    private String word;
 
     @Before
     public void setUp(TestContext ctx) {
         host = "localhost";
-        port = 8080;
+        port = getAvailablePort();
         rootPath = "/hangman/v1";
+
+        word = "hangman";
+
         vertx = Vertx.vertx();
-        vertx.deployVerticle(HangmanVerticle.class.getName(),
-            ctx.asyncAssertSuccess());
+        DeploymentOptions options = new DeploymentOptions()
+            .setConfig(new JsonObject()
+                .put("http.port", port)
+                .put("wordlist", new JsonArray(new ArrayList<String>(){{
+                    add(word);
+                }}))
+            );
+        vertx.deployVerticle(HangmanVerticle.class.getName(), options, ctx.asyncAssertSuccess());
+    }
+
+    private Integer getAvailablePort() {
+        int port;
+        try (ServerSocket socket = new ServerSocket(0)) {
+            port = socket.getLocalPort();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            port = 8080;
+        }
+
+        return port;
     }
 
     @After
