@@ -11,6 +11,7 @@ import io.vertx.rxjava.core.http.HttpServerResponse;
 import io.vertx.rxjava.ext.web.Router;
 import io.vertx.rxjava.ext.web.RoutingContext;
 import io.vertx.rxjava.ext.web.designdriven.OpenAPI3RouterFactory;
+import javafx.util.Pair;
 import rx.Observable;
 import rx.Single;
 import rx.observables.SyncOnSubscribe;
@@ -27,7 +28,8 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         playerRepository.create(new Player("player1", 1));
         playerService = new PlayerServiceImpl(playerRepository);
         WordList wordList = createWordList();
-        gameService = new GameServiceImpl(playerRepository, wordList);
+        GameRepository gameRepository = new MemoryGameRepository();
+        gameService = new GameServiceImpl(playerRepository, gameRepository, wordList);
 
         createRouterFactory().subscribe(
             rf -> {
@@ -65,6 +67,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         rf.addHandlerByOperationId("listPlayers", this::listPlayers, this::handleFailure);
 
         rf.addHandlerByOperationId("startGame", this::startGame, this::handleFailure);
+        rf.addHandlerByOperationId("guess", this::guess, this::handleFailure);
         return rf;
     }
 
@@ -74,7 +77,23 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
         JsonObject jsonBody = body.getJsonObject();
         String playerName = jsonBody.getString("name");
 
-        Single<Game> gameS = gameService.start(playerName);
+        Single<Pair<String, Game>> gameS = gameService.start(playerName);
+        HttpServerResponse response = ctx.response();
+        gameS.subscribe(game -> {
+            String gamePath = ctx.request().absoluteURI() + "/" + game.getKey();
+            response.putHeader("Location", gamePath);
+            respondJsonObject(response, game.getValue());
+        }, ctx::fail);
+    }
+
+    private void guess(RoutingContext ctx) {
+        RequestParameters params = ctx.get("parsedParameters");
+        RequestParameter body = params.body();
+        JsonObject jsonBody = body.getJsonObject();
+        String gameId = params.pathParameter("gameId").getString();
+        String letter = jsonBody.getString("letter");
+
+        Single<Game> gameS = gameService.guess(gameId, letter);
         HttpServerResponse response = ctx.response();
         gameS.subscribe(game -> respondJsonObject(response, game), ctx::fail);
     }
@@ -88,6 +107,7 @@ public class HangmanVerticle extends io.vertx.rxjava.core.AbstractVerticle {
     private void fetchPlayerInfo(RoutingContext ctx) {
         RequestParameters params = ctx.get("parsedParameters");
         String playerId = params.pathParameter("playerId").getString();
+
         Single<Player> playerS = playerService.fetch(playerId);
         HttpServerResponse response = ctx.response();
         playerS.subscribe(player -> respondJsonObject(response, player), ctx::fail);
