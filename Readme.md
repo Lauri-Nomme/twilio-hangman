@@ -1,4 +1,4 @@
-# Project Title
+# Hangman API
 
 This is an implementation of the Hangman API. Hangman is a simple game where one has to guess a word by proposing letters.
 Using this implementation you can integrate Hangman game into your products, applications, refigerators or wherever you want to.
